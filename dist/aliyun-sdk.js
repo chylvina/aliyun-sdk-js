@@ -1281,7 +1281,7 @@ ALY.XHRClient = ALY.util.inherit({
     var buffer;
     if (xhr.responseType === 'arraybuffer' && xhr.response) {
       var ab = xhr.response;
-      buffer = Buffer.from(ab.byteLength);
+      buffer = Buffer.alloc(ab.byteLength);
       var view = new Uint8Array(ab);
       for (var i = 0; i < buffer.length; ++i) {
         buffer[i] = view[i];
@@ -4054,8 +4054,10 @@ ALY.OSS = ALY.Service.defineService('oss', ['2013-10-15'], {
           ALY.util.date.unixSeconds() + expires, 10).toString();
       }
 
-      request.httpRequest.path += '?security-token=' + request.service.config.securityToken;
-      request.httpRequest.headers['security-token'] = request.service.config.securityToken;
+      if (request.service.config.securityToken) {
+        request.httpRequest.path += '?security-token=' + request.service.config.securityToken;
+        request.httpRequest.headers['security-token'] = request.service.config.securityToken;
+      }
     }
 
     function signedUrlSigner() {
@@ -5441,7 +5443,7 @@ ALY.util = {
         length += buffers[i].length;
       }
 
-      buffer = Buffer.from(length);
+      buffer = Buffer.alloc(length);
 
       for (i = 0; i < buffers.length; i++) {
         buffers[i].copy(buffer, offset);
@@ -21205,7 +21207,371 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":113,"_process":85,"inherits":112}],"oss-2013-10-15.json":[function(require,module,exports){
+},{"./support/isBuffer":113,"_process":85,"inherits":112}],"batchcompute-2015-06-30.json":[function(require,module,exports){
+module.exports={
+  "format": "rest-json",
+  "apiVersion": "2015-06-30",
+  "checksumFormat": "md5",
+  "endpointPrefix": "batchcompute",
+  "serviceAbbreviation": "BatchCompute",
+  "serviceFullName": "Aliyun Batch Computing Service",
+  "signatureVersion": "batchcompute",
+  "timestampFormat": "rfc822",
+  "xmlnamespace": "",
+  "operations": {
+    "createJob": {
+      "name": "CreateJob",
+      "http": {
+        "method": "POST",
+        "uri": "/jobs"
+      },
+      "input": {
+        "payload": ["JobName", "JobTag", "Priority", "Description", "TaskDag"],
+        "members": {
+          "JobName":{
+            "type": "string",
+            "required": true
+          },
+          "JobTag": {
+            "required": true,
+            "type": "string"
+          },
+          "Priority": {
+            "required": true,
+            "type": "integer"
+          },
+          "Description": {
+            "required": false,
+            "type": "String"
+          },
+          "TaskDag": {
+            "required":true,
+            "type": "structure",
+            "members": {
+              "TaskDescMap": {
+                "required":true,
+                "type": "map",
+                "members": {
+                  "type": "structure",
+                  "members": {
+                     "InstanceCount": {
+                       "required": true,
+                       "type": "integer"
+                     },
+                    "Timeout": {
+                      "required": true,
+                      "type": "integer"
+                    },
+                    "ImageId": {
+                      "required": true,
+                      "type": "string"
+                    },
+                    "OssMappingLock": {
+                      "required": false,
+                      "type": "boolean"
+                    },
+                    "OssMappingLocale": {
+                      "required": false,
+                      "type": "string"
+                    },
+                    "OssMapping": {
+                      "required": false,
+                      "type": "map",
+                      "members":{
+                        "type":"string"
+                      }
+                    },
+                    "PackageUri": {
+                      "required": true
+                    },
+                    "ProgramName": {
+                      "required": true
+                    },
+                    "ProgramType": {
+                      "required": true
+                    },
+                    "ProgramArguments": {
+                      "required": false
+                    },
+                    "EnvironmentVariables": {
+                      "required": false,
+                      "type": "map",
+                      "members":{
+                        "type":"string"
+                      }
+                    },
+                    "StdoutRedirectPath": {
+                      "required": false
+                    },
+                    "StderrRedirectPath": {
+                      "required": false
+                    },
+                    "ResourceDescription": {
+                      "type": "structure",
+                      "required": true,
+                      "members": {
+                        "Cpu": {
+                          "type": "integer",
+                          "required": true
+                        },
+                        "Memory": {
+                          "type": "integer",
+                          "required": true
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "Dependencies": {
+                "type": "map",
+                "required": false,
+                "members": {
+                  "type": "list"
+                }
+              }
+            }
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+          "JobId": {
+            "type": "string",
+            "name": "ResourceId"
+          },
+          "RequestId": {
+            "location": "header",
+            "name": "Request-Id"
+          }
+        }
+      }
+    },
+    "listJobs": {
+      "name": "ListJobs",
+      "http": {
+        "method": "GET",
+        "uri": "/jobs"
+      },
+      "input": {
+        "type": "structure",
+        "members": {
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+        }
+      }
+    },
+    "getJob": {
+      "name": "GetJob",
+      "http": {
+        "method": "GET",
+        "uri": "/jobs/{jobId}"
+      },
+      "input": {
+        "type": "structure",
+        "members": {
+          "jobId": {
+            "type": "string",
+            "required": true,
+            "location": "uri"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+           "requestId": {
+             "type": "string",
+             "location": "header",
+             "name":"request-id"
+           }
+        }
+      }
+    },
+    "getJobDescription": {
+      "name": "GetJobDescription",
+      "http": {
+        "method": "GET",
+        "uri": "/jobs/{jobId}/description"
+      },
+      "input": {
+        "type": "structure",
+        "members": {
+          "jobId": {
+            "type": "string",
+            "required": true,
+            "location": "uri"
+          }
+        }
+      },
+      "output": {
+        "type": "structure",
+        "members": {
+
+        }
+      }
+    },
+    "listTasks": {
+      "name":"ListTasks",
+      "http": {
+        "method": "GET",
+        "uri": "/jobs/{jobId}/tasks"
+      },
+      "input": {
+        "members":{
+          "jobId":{
+            "type":"string",
+            "required":true,
+            "location":"uri"
+          }
+        }
+
+      },
+      "output": {
+        "type": "structure",
+        "members":{
+          "requestId": {
+            "type": "string",
+            "location": "header",
+            "name":"request-id"
+          }
+        }
+      }
+    },
+    "listImages": {
+      "name":"ListImages",
+      "http": {
+        "method": "GET",
+        "uri": "/images"
+      },
+      "input": {
+
+      },
+      "output": {
+        "type": "structure",
+        "members":{
+          "requestId": {
+            "type": "string",
+            "location": "header",
+            "name":"request-id"
+          }
+        }
+      }
+    },
+    "updateJobPriority": {
+      "name": "UpdateJobPriority",
+      "http": {
+        "method": "PUT",
+        "uri": "/jobs/{jobId}/Priority"
+      },
+      "input": {
+        "payload": ["priority"],
+        "members":{
+          "jobId":{
+            "type":"string",
+            "required":true,
+            "location":"uri"
+          },
+          "priority":{
+            "type":"integer",
+            "required":true
+          }
+        }
+      },
+      "output": {
+        "payload":"none",
+        "members":{
+          "none": {
+            "required": false
+          }
+        }
+      }
+    },
+
+    "stopJob": {
+      "name": "StopJob",
+      "http": {
+        "method": "PUT",
+        "uri": "/jobs/{jobId}?Action=Stop"
+      },
+      "input": {
+        "members":{
+          "jobId":{
+            "type":"string",
+            "required":true,
+            "location":"uri"
+          }
+        }
+      },
+      "output": {
+        "payload":"none",
+        "members":{
+          "none": {
+            "required": false
+          }
+        }
+      }
+    },
+    "startJob": {
+      "name": "StartJob",
+      "http": {
+        "method": "PUT",
+        "uri": "/jobs/{jobId}?Action=Start"
+      },
+      "input": {
+        "members":{
+          "jobId":{
+            "type":"string",
+            "required":true,
+            "location":"uri"
+          }
+        }
+      },
+      "output": {
+        "payload":"none",
+        "members":{
+          "none": {
+            "required": false
+          }
+        }
+      }
+    },
+    "deleteJob": {
+      "name": "DeleteJob",
+      "http": {
+        "method": "DELETE",
+        "uri": "/jobs/{jobId}"
+      },
+      "input": {
+        "members":{
+          "jobId":{
+            "type":"string",
+            "required":true,
+            "location":"uri"
+          }
+        }
+      },
+      "output": {
+        "payload":"none",
+        "members":{
+          "none": {
+            "required": false
+          }
+        }
+      }
+    }
+
+  },
+  "pagination": {
+
+  }
+}
+
+},{}],"oss-2013-10-15.json":[function(require,module,exports){
 module.exports={
   "format": "rest-xml",
   "apiVersion": "2013-10-15",
