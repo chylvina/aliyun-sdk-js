@@ -846,6 +846,7 @@ require('./param_validator');
 ALY.events = new ALY.SequentialExecutor();
 
 },{"./config":4,"./event_listeners":6,"./http":7,"./param_validator":10,"./request":11,"./sequential_executor":12,"./service":13,"./signers/request_signer":31,"./util":34}],6:[function(require,module,exports){
+(function (Buffer){
 var ALY = require('./core');
 require('./sequential_executor');
 require('./service_interface/json');
@@ -975,7 +976,7 @@ ALY.EventListeners = {
         function HTTP_HEADERS(statusCode, headers, resp) {
       resp.httpResponse.statusCode = statusCode;
       resp.httpResponse.headers = headers;
-      resp.httpResponse.body = new ALY.util.Buffer('');
+      resp.httpResponse.body = Buffer.from('');
       resp.httpResponse.buffers = [];
       resp.httpResponse.numBytes = 0;
     });
@@ -990,7 +991,7 @@ ALY.EventListeners = {
           resp.request.emit('httpDownloadProgress', [progress, resp]);
         }
 
-        resp.httpResponse.buffers.push(new ALY.util.Buffer(chunk));
+        resp.httpResponse.buffers.push(Buffer.from(chunk));
       }
     });
 
@@ -1097,7 +1098,8 @@ ALY.EventListeners = {
   })
 };
 
-},{"./core":5,"./sequential_executor":12,"./service_interface/json":14,"./service_interface/pop":15,"./service_interface/query":16,"./service_interface/rest":17,"./service_interface/rest_json":18,"./service_interface/rest_xml":19,"./service_interface/top":20,"util":114}],7:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"./core":5,"./sequential_executor":12,"./service_interface/json":14,"./service_interface/pop":15,"./service_interface/query":16,"./service_interface/rest":17,"./service_interface/rest_json":18,"./service_interface/rest_xml":19,"./service_interface/top":20,"buffer":77,"util":114}],7:[function(require,module,exports){
 (function (process){
 var ALY = require('./core');
 var inherit = ALY.util.inherit;
@@ -1192,6 +1194,7 @@ ALY.HttpClient.getInstance = function getInstance() {
 
 }).call(this,require('_process'))
 },{"./core":5,"_process":85}],8:[function(require,module,exports){
+(function (Buffer){
 var ALY = require('../core');
 var EventEmitter = require('events').EventEmitter;
 require('../http');
@@ -1278,7 +1281,7 @@ ALY.XHRClient = ALY.util.inherit({
     var buffer;
     if (xhr.responseType === 'arraybuffer' && xhr.response) {
       var ab = xhr.response;
-      buffer = new ALY.util.Buffer(ab.byteLength);
+      buffer = Buffer.from(ab.byteLength);
       var view = new Uint8Array(ab);
       for (var i = 0; i < buffer.length; ++i) {
         buffer[i] = view[i];
@@ -1287,7 +1290,7 @@ ALY.XHRClient = ALY.util.inherit({
 
     try {
       if (!buffer && typeof xhr.responseText === 'string') {
-        buffer = new ALY.util.Buffer(xhr.responseText);
+        buffer = Buffer.from(xhr.responseText);
       }
     } catch (e) {}
 
@@ -1306,7 +1309,8 @@ ALY.HttpClient.prototype = ALY.XHRClient.prototype;
  */
 ALY.HttpClient.streamsApiVersion = 1;
 
-},{"../core":5,"../http":7,"events":79}],9:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"../core":5,"../http":7,"buffer":77,"events":79}],9:[function(require,module,exports){
 var ALY = require('../core');
 var inherit = ALY.util.inherit;
 
@@ -3098,9 +3102,9 @@ ALY.ServiceInterface.Rest = {
       }
     });
 
-    if(req.service.config.securityToken) {
-      req.httpRequest.headers["x-oss-security-token"] = req.service.config.securityToken;
-    }
+    // if(req.service.config.securityToken) {
+    //   req.httpRequest.headers["x-oss-security-token"] = req.service.config.securityToken;
+    // }
 
   }
 };
@@ -4049,6 +4053,9 @@ ALY.OSS = ALY.Service.defineService('oss', ['2013-10-15'], {
         request.httpRequest.headers[expiresHeader] = parseInt(
           ALY.util.date.unixSeconds() + expires, 10).toString();
       }
+
+      request.httpRequest.path += '?security-token=' + request.service.config.securityToken;
+      request.httpRequest.headers['security-token'] = request.service.config.securityToken;
     }
 
     function signedUrlSigner() {
@@ -4074,8 +4081,7 @@ ALY.OSS = ALY.Service.defineService('oss', ['2013-10-15'], {
       var parsedUrl = ALY.util.urlParse(request.httpRequest.path);
       var querystring = ALY.util.queryParamsToString(queryParams);
       endpoint.pathname = parsedUrl.pathname;
-      endpoint.search = !parsedUrl.search ? querystring :
-        parsedUrl.search + '&' + querystring;
+      endpoint.search = querystring;
     }
 
     request.on('build', signedUrlBuilder);
@@ -4587,6 +4593,10 @@ ALY.Signers.OSS = inherit(ALY.Signers.RequestSigner, {
       else {
         this.request.headers['Date'] = ALY.util.date.rfc822(date);
       }
+
+      // 在 getSignedUrl 的情况下，没有这个 header
+      if(credentials.securityToken)
+        this.request.headers['x-oss-security-token'] = credentials.securityToken;
     }
 
     var signature = this.sign(credentials.secretAccessKey, this.stringToSign());
@@ -4701,7 +4711,7 @@ ALY.Signers.OSS = inherit(ALY.Signers.RequestSigner, {
   },
 
   sign: function sign(secret, string) {
-    if (process.env.DEBUG == 'aliyun') {
+    if (process.env.DEBUG === 'aliyun') {
       console.log('----------- sign string start -----------');
       console.log(string);
       console.log('----------- sign string end -----------');
@@ -5407,11 +5417,11 @@ ALY.util = {
   base64: {
 
     encode: function encode64(string) {
-      return new Buffer(string).toString('base64');
+      return Buffer.from(string).toString('base64');
     },
 
     decode: function decode64(string) {
-      return new Buffer(string, 'base64').toString();
+      return Buffer.from(string, 'base64').toString();
     }
 
   },
@@ -5431,7 +5441,7 @@ ALY.util = {
         length += buffers[i].length;
       }
 
-      buffer = new Buffer(length);
+      buffer = Buffer.from(length);
 
       for (i = 0; i < buffers.length; i++) {
         buffers[i].copy(buffer, offset);
@@ -5445,7 +5455,7 @@ ALY.util = {
   string: {
     byteLength: function byteLength(string) {
       if (string === null || string === undefined) return 0;
-      if (typeof string === 'string') string = new Buffer(string);
+      if (typeof string === 'string') string = Buffer.from(string);
 
       if (typeof string.byteLength === 'number') {
         return string.byteLength;
@@ -5684,7 +5694,7 @@ ALY.util = {
       var crc = 0 ^ -1;
 
       if (typeof data === 'string') {
-        data = new Buffer(data);
+        data = Buffer.from(data);
       }
 
       for (var i = 0; i < data.length; i++) {
@@ -5706,7 +5716,7 @@ ALY.util = {
       if (!fn) fn = 'sha256';
 
       if (typeof string != 'string') {
-        //string = new Buffer(string);
+        //string = Buffer.from(string);
         // todo: 目前只支持 string
         return "";
       }
@@ -5787,7 +5797,7 @@ ALY.util = {
     sha256: function sha256(string, digest) {
       //if (!digest) { digest = 'binary'; }
       //if (digest === 'buffer') { digest = undefined; }
-      //if (typeof string === 'string') string = new Buffer(string);
+      //if (typeof string === 'string') string = Buffer.from(string);
       //return ALY.util.crypto.createHash('sha256').update(string).digest(digest);
       return "";
     },
