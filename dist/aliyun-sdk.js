@@ -4679,8 +4679,15 @@ ALY.Signers.OSS = inherit(ALY.Signers.RequestSigner, {
         // var name = param.split('=')[0];
         // var value = param.split('=')[1];
         var i = param.indexOf('=');
-        var name = param.substr(0, i);
-        var value = param.substr(i + 1);
+        var name;
+        var value;
+        if (i < 0) {
+          name = param;
+        }
+        else {
+          name = param.substr(0, i);
+          value = param.substr(i + 1);
+        }
         if (this.subResources[name] || this.responseHeaders[name]) {
           var subresource = {name: name};
           if (value !== undefined) {
